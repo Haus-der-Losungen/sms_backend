@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = 'a41f8611536a'
 down_revision: Union[str, None] = None
@@ -19,7 +18,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def timestamps(indexed: bool = False) -> sa.Tuple[sa.Column, sa.Column, sa.Column]:
+def timestamps(indexed: bool = False) -> Tuple[sa.Column, sa.Column, sa.Column]:
     return (
         sa.Column(
             "created_at",
@@ -43,6 +42,7 @@ def timestamps(indexed: bool = False) -> sa.Tuple[sa.Column, sa.Column, sa.Colum
             index=indexed,
         ),
     )
+
 
 def create_users_table() -> None:
     users_table = op.create_table(
@@ -90,7 +90,7 @@ def create_profiles_table() -> None:
         sa.Column("last_name", sa.String(50), nullable=False),
         sa.Column("phone", sa.String(20), nullable=False),
         sa.Column("gender", sa.String(10), nullable=False),
-        sa.Column("user_type", sa.String(20), nullable=False),
+        sa.Column("user_type", sa.String(20), nullable=False),  # Corrected key name
         *timestamps(),
     )
 
@@ -105,7 +105,7 @@ def create_profiles_table() -> None:
                 "last_name": "Sem",
                 "phone": "0241234567",
                 "gender": "Female",
-                "user_role": "student",
+                "user_type": "student",
             },
             {
                 "id": "950eeb54-b46c-4a50-a08d-ea52e0e0e4f9",
@@ -115,7 +115,7 @@ def create_profiles_table() -> None:
                 "last_name": "Kuzagbe",
                 "phone": "0241234567",
                 "gender": "Male",
-                "user_role": "admin",
+                "user_type": "admin",
             },
             {
                 "id": "950eeb54-b46c-4a50-a08d-ea52e0e0e4f7",
@@ -125,7 +125,7 @@ def create_profiles_table() -> None:
                 "last_name": "Quaye",
                 "phone": "0241234567",
                 "gender": "Male",
-                "user_role": "staff",
+                "user_type": "staff",
             },
             {
                 "id": "5b2035bd-3059-457e-bc90-f9dc6210d509",
@@ -135,20 +135,15 @@ def create_profiles_table() -> None:
                 "last_name": "Annan",
                 "phone": "0241234567",
                 "gender": "Male",
-                "user_role": "super admin",
+                "user_type": "super admin",
             },
         ],
     )
 
 
-
-
-
-
-
 def upgrade() -> None:
-   create_users_table()
-   create_profiles_table()
+    create_users_table()
+    create_profiles_table()
 
 
 def downgrade() -> None:
