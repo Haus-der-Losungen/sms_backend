@@ -1,67 +1,50 @@
-"""Base Model"""
-
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
-class CoreModel(BaseModel):
-    class Config:
-        from_attributes = True
-        validate_assignment = True
-        extra = "forbid"
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v)
-        }
-
-    @model_validator(mode="before")
-    @classmethod
-    def convert_all_uuids(cls, data: Any) -> Any:
-        """Convert all UUID values to strings recursively."""
-        if isinstance(data, dict):
-            return {
-                key: (
-                    str(value)
-                    if isinstance(value, UUID)
-                    else cls.convert_all_uuids(value)
-                )
-                for key, value in data.items()
-            }
-        elif isinstance(data, list):
-            return [cls.convert_all_uuids(item) for item in data]
-        return data
-
-    def model_dump(self, **kwargs):
-        """Override model_dump to ensure UUIDs are converted to strings."""
-        data = super().model_dump(**kwargs)
-        return self.convert_all_uuids(data)
-
-
-
-class IDMixin(BaseModel):
-    id: int
-
-
-class UUIDMixin(BaseModel):
-    id: UUID
-
-
+# Factory for current UTC timestamp
 def datetime_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-class TimestampMixin(BaseModel):
+# Base model with common configuration
+class CoreModel(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        validate_assignment=True,
+        extra="forbid",
+        use_enum_values=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat(),
+            UUID: str
+        }
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_data(cls, data: Any) -> Any:
+        # Placeholder for any pre-processing if needed
+        return data
+
+
+# ID Mixin
+class IDMixin(CoreModel):
+    id: int  # or UUID, depending on your project
+
+
+# Timestamp Mixin for created/updated fields
+class TimestampMixin(CoreModel):
     created_at: datetime = Field(default_factory=datetime_now)
     updated_at: datetime = Field(default_factory=datetime_now)
 
 
-class DeleteMixin(BaseModel):
+# Soft delete Mixin
+class DeleteMixin(CoreModel):
     is_deleted: bool = False
 
-class UserIDModelMixin(BaseModel):
-    """User ID data."""
 
-    user_id: UUID
+# Mixin to associate with a user
+class UserIDModelMixin(CoreModel):
+    user_id: int  # or UUID
