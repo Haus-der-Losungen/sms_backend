@@ -1,9 +1,14 @@
 "Helper function"
 import uuid
+import random
 
 
 class Helpers:
     @staticmethod
-    async def generate_uuid() -> str:
-        """Generate a UUID as a string."""
-        return str(uuid.uuid4())
+    def generate_sequential_id() -> str:
+     global last_used_id
+     if last_used_id >= 9999999:
+        raise ValueError("No more IDs available")
+     last_used_id += 1
+     return str(last_used_id)
+
