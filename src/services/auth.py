@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 
+import bcrypt
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -58,9 +59,14 @@ class AuthService:
 
         return user_id
 
-    async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return self.pwd_context.verify(plain_password, hashed_password)
+    @staticmethod
+    async def get_pin_hash(pin: str) -> str:
+        """Hash a PIN using bcrypt"""
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(pin.encode('utf-8'), salt)
+        return hashed.decode('utf-8')
 
-    async def get_password_hash(self, password: str) -> str:
-        """Method to hash passwords"""
-        return self.pwd_context.hash(password)
+    @staticmethod
+    async def verify_pin(plain_pin: str, hashed_pin: str) -> bool:
+        """Verify a PIN against its hashed version"""
+        return bcrypt.checkpw(plain_pin.encode('utf-8'), hashed_pin.encode('utf-8'))
