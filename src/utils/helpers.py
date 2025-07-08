@@ -1,6 +1,6 @@
 "Helper function"
 
-
+last_used_id = 1000004  # Initialize with the lowest 7-digit number
 
 class Helpers:
  @staticmethod
