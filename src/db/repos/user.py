@@ -1,4 +1,5 @@
 import logging
+import random
 import uuid
 from typing import List, Optional
 
@@ -14,9 +15,9 @@ from src.services.auth import AuthService
 
 CREATE_USER_QUERY = """
 INSERT INTO users (
-    user_id, email, password_hash
+    user_id, role, pin_hash
 )
-VALUES (:user_id, :email, :password_hash)
+VALUES (:user_id, :role, :pin_hash)
 RETURNING *
 """
 
@@ -30,14 +31,10 @@ SELECT * FROM users
 WHERE user_id = :user_id AND is_deleted = FALSE
 """
 
-GET_USER_BY_EMAIL_QUERY = """
-SELECT * FROM users 
-WHERE email = :email AND is_deleted = FALSE
-"""
 
 UPDATE_USER_QUERY = """
 UPDATE users
-SET email = COALESCE(:email, email),
+SET pin_hash = COALESCE(:pin_hash, pin_hash),
     updated_at = CURRENT_TIMESTAMP
 WHERE user_id = :user_id
 RETURNING *
@@ -60,16 +57,15 @@ class UserRepository(BaseRepository):
 
     async def create_user(self, *, new_user: UserCreate) -> UserInDb:
         try:
-            user_id = str(uuid.uuid4())
-            hashed_password = await AuthService().get_password_hash(new_user.password_hash)
+            user_id = str(random.randint(100000, 999999))
+            pin_hash = await AuthService().get_pin_hash(new_user.pin_hash)
 
             values = {
                 "user_id": user_id,
-                "email": new_user.email,
-                "password_hash": hashed_password
+                "role": new_user.role,
+                "pin_hash": pin_hash
             }
 
-            audit_logger.info(f"Creating user, email: {new_user.email}")
             created_user = await self.db.fetch_one(query=CREATE_USER_QUERY, values=values)
             audit_logger.info(f"User created successfully, ID: {user_id}")
             return UserInDb(**created_user)
@@ -86,9 +82,7 @@ class UserRepository(BaseRepository):
             raise NotFoundError(entity_name="User", entity_identifier=str(user_id))
         return UserInDb(**user)
 
-    async def get_user_by_email(self, email: str) -> Optional[UserInDb]:
-        user = await self.db.fetch_one(query=GET_USER_BY_EMAIL_QUERY, values={"email": email})
-        return UserInDb(**user) if user else None
+ 
 
     async def get_users(self) -> List[UserInDb]:
         users = await self.db.fetch_all(query=GET_USERS_QUERY)
