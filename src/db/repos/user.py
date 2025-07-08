@@ -6,6 +6,7 @@ from typing import List, Optional
 from databases import Database
 
 from pydantic import EmailStr, ValidationError
+from src.utils.helpers import Helpers
 
 from src.models.token import AccessToken
 from src.db.repos.base import BaseRepository
@@ -57,7 +58,7 @@ class UserRepository(BaseRepository):
 
     async def create_user(self, *, new_user: UserCreate) -> UserInDb:
         try:
-            user_id = str(random.randint(100000, 999999))
+            user_id = Helpers.generate_sequential_id()
             pin_hash = await AuthService().get_pin_hash(new_user.pin_hash)
 
             values = {
