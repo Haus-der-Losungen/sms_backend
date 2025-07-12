@@ -29,11 +29,6 @@ class CoreModel(BaseModel):
         return data
 
 
-# ID Mixin
-class IDMixin(CoreModel):
-    id: int  # or UUID, depending on your project
-
-
 # Timestamp Mixin for created/updated fields
 class TimestampMixin(CoreModel):
     created_at: datetime = Field(default_factory=datetime_now)
@@ -47,4 +42,4 @@ class DeleteMixin(CoreModel):
 
 # Mixin to associate with a user
 class UserIDModelMixin(CoreModel):
-    user_id: int  # or UUID
+    user_id: str  # or UUID
