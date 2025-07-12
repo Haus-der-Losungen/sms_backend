@@ -5,10 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.api.dependencies.auth import (
-    get_current_user,
-    
-)
+from src.api.dependencies.auth import get_current_user
 from src.api.dependencies.database import get_repository
 from src.db.repos.profiles import ProfileRepository
 from src.models.profiles import ProfilePublic, ProfileUpdate
@@ -26,7 +23,8 @@ async def get_profiles(
     profile_repo: ProfileRepository = Depends(get_repository(ProfileRepository)),
 ) -> List[ProfilePublic]:
     """Get all profiles."""
-    return await profile_repo.get_profiles()
+    profiles_in_db = await profile_repo.get_profiles()
+    return [ProfilePublic(**profile.dict()) for profile in profiles_in_db]
 
 
 @profile_router.get(
@@ -36,29 +34,40 @@ async def get_profiles(
 )
 async def get_profile(
     profile_repo: ProfileRepository = Depends(get_repository(ProfileRepository)),
-    profile_id: Optional[UUID] = Query(None, description="The profile's UUID"),
-    user_id: Optional[UUID] = Query(None, description="The associated user's UUID"),
+    profile_id: Optional[UUID] = Query(default=None, description="The profile's UUID"),
+    user_id: Optional[int] = Query(default=None, description="The associated user's ID"),
 ) -> ProfilePublic:
     """Get a profile by profile ID or user ID."""
-    if not (profile_id or user_id):
+    if profile_id is None and user_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Either profile_id or user_id must be provided.",
         )
-    if profile_id:
-        return await profile_repo.get_profile_by_id(id=profile_id)
-    return await profile_repo.get_profile_by_user_id(user_id=user_id)
-
-
-#@profile_router.get(
+    if profile_id is not None:
+        profile = await profile_repo.get_profile_by_id(id=profile_id)
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile not found.",
+            )
+        return profile
+    if user_id is not None:
+        profile = await profile_repo.get_profile_by_user_id(user_id=user_id)
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile not found.",
+            )
+        return profile
+        return await profile_repo.get_profile_by_user_id(user_id=user_id)
+@profile_router.get(
     "/me",
     response_model=ProfilePublic,
     status_code=status.HTTP_200_OK,
-#)
-#async def get_current_user_profile(
+)
+async def get_current_user_profile(
     current_user: UserProfileInDb = Depends(get_current_user),
-    profile_repo: ProfileRepository = Depends(get_repository(ProfileRepository)),
-#) -> ProfilePublic:
+) -> ProfilePublic:
     """Get the current user's profile details."""
     return current_user.profile
 
