@@ -1,26 +1,41 @@
-"""
-User Model
-"""
-from ast import pattern
-from typing import Optional
-from pydantic import  BaseModel, constr, field_validator, Field
+from pydantic import BaseModel, Field, constr
 
+from src.enums.users import UserRole
 from src.models.base import CoreModel, TimestampMixin, DeleteMixin, UserIDModelMixin
 
+# Base model for user creation - minimal fields only
 class UserBase(CoreModel):
-    role: str = Field(..., description="user role")
+    """Base user model with common fields"""
+    role: UserRole = Field(UserRole.STUDENT, description="User Role")
 
+# Model for user creation - no IDs, plain PIN
 class UserCreate(UserBase):
-    pin_hash: str = Field(min_length=6,max_length=6, pattern=r"^\d+$", description="user pin")
+    """Model for creating a new user"""
+    pin: str = Field(..., min_length=4, max_length=10, description="User PIN (plain text)")
 
+# Model for updating user - only role can be updated
 class UserUpdate(CoreModel):
-    pin_hash: str = Field(min_length=6,max_length=6, pattern= r"^\d+$", description="user pin")
+    """Model for updating user information"""
+    role: UserRole = Field(UserRole.STUDENT, description="User Role")
 
+# Model for user login
 class UserLogin(BaseModel):
-    pin_hash: str = Field(min_length=6,max_length=6, pattern= r"^\d+$", description="user pin")
+    """Model for user login"""
+    pin: str = Field(..., min_length=4, max_length=10, description="User PIN (plain text)")
+    user_id: str = Field(..., description="User ID")
 
+# Model for public API responses - includes IDs and timestamps
 class UserPublic(TimestampMixin, DeleteMixin, UserBase, UserIDModelMixin):
-    role: Optional[str] = Field(None)
+    """Model for public user information in API responses"""
+    role: UserRole = Field(UserRole.STUDENT, description="User Role")
 
+# Model for database objects - includes hashed PIN
 class UserInDb(UserPublic):
-    pin_hash: str = Field( min_length=6,max_length=6, pattern=r"^\d+$", description="user pin")
+    """Model for user data as stored in database"""
+    pin_hash: constr(min_length=6, max_length=268) = Field(..., description="User PIN (hashed)")  # type: ignore
+
+# Model for /me endpoint - shows user ID and hashed PIN
+class UserMe(CoreModel):
+    """Model for /me endpoint - shows user ID and PIN hash"""
+    user_id: str = Field(..., description="User ID")
+    pin_hash: constr(min_length=6, max_length=268) = Field(..., description="User PIN (hashed)")  # type: ignore
