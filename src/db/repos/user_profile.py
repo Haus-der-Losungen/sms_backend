@@ -1,4 +1,4 @@
-"""User Profile repository."""
+"""User Profile repository for combined user and profile operations."""
 
 import logging
 from databases import Database
@@ -14,10 +14,10 @@ audit_logger = logging.getLogger("audit")
 
 
 class UserProfileRepository(BaseRepository):
-    """User Profile repository."""
+    """Repository for combined user and profile operations."""
 
     def __init__(self, db: Database) -> None:
-        """Initialize the repository."""
+        """Initialize the repository with database connection."""
         super().__init__(db)
         self.user_repo = UserRepository(db)
         self.profile_repo = ProfileRepository(db)
@@ -28,15 +28,19 @@ class UserProfileRepository(BaseRepository):
         new_user: UserCreate,
         new_profile: ProfileCreate,
     ) -> UserProfileInDb:
-        """Create a new user and profile."""
+        """Create a new user and profile in a single transaction."""
         async with self.db.transaction():
+            # Create user first
             user = await self.user_repo.create_user(new_user=new_user)
-            audit_logger.info(f"Created user: {user.email}")
+            audit_logger.info(f"Created user: {user.user_id}")
 
-            new_profile.user_id = user.user_id
-            new_profile.email = user.email
+            # Create profile with user_id
+            profile_data = new_profile.model_copy(
+                update={"user_id": user.user_id}
+            )
 
-            profile = await self.profile_repo.create_profile(new_profile=new_profile)
-            audit_logger.info(f"Created profile: {profile.id} for user: {user.user_id}")
+            profile = await self.profile_repo.create_profile(new_profile=profile_data)
+            audit_logger.info(f"Created profile: {profile.profile_id} for user: {user.user_id}")
 
             return UserProfileInDb(user=user, profile=profile)
+
