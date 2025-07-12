@@ -19,11 +19,10 @@ def setup_middleware(app: FastAPI) -> None:
     )
 
     @app.middleware("http")
-    async def log_requests(request: Request, call_next: callable) -> JSONResponse:
-        client_ip = request.client.host
+    async def log_requests(request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
         method = request.method
         path = request.url.path
-        print(f"Incoming request: {method} {path} from {client_ip}")
         request_logger.info(f"Incoming request: {method} {path} from {client_ip}")
 
         response = await call_next(request)
