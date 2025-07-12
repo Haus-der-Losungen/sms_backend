@@ -15,7 +15,7 @@ class CoreError(Exception):
 class InternalServerError(CoreError):
     """Raised when an internal server error occurs."""
 
-    def __init__(self, additional_message: str = None) -> None:
+    def __init__(self, additional_message: str = "") -> None:
         """Initializes the error with the entity name and a dynamic message."""
         message = "Internal Server Error"
         if additional_message:
@@ -35,7 +35,7 @@ class InvalidTokenError(CoreError):
 class ValueError(CoreError):
     """Raised when an entity is not found in the database."""
 
-    def __init__(self, additional_message: str = None) -> None:
+    def __init__(self, additional_message: str = "") -> None:
         """Initializes the error with the entity name and a dynamic message."""
         message = "Value Error"
         if additional_message:
