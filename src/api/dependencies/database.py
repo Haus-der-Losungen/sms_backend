@@ -16,7 +16,7 @@ def get_database(request: Request) -> Database:
     return db
 
 
-def get_repository(repo_type: BaseRepository) -> Callable:
+def get_repository(repo_type: type[BaseRepository]) -> Callable:
     def get_repo(db: Database = Depends(get_database)) -> BaseRepository:
         return repo_type(db)
     return get_repo
