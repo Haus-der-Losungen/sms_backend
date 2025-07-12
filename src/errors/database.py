@@ -92,7 +92,7 @@ class FailedToCreateUpdateQueryError(DatabaseError):
 class InvalidSearchCriteriaError(DatabaseError):
     """Raised when no valid search criteria are provided for a database query."""
 
-    def __init__(self, entity_name: str = None) -> None:
+    def __init__(self, entity_name: str = "") -> None:
         """Initializes the error with an optional entity name and a dynamic message."""
         message = "No valid search criteria provided"
         if entity_name:
@@ -101,9 +101,9 @@ class InvalidSearchCriteriaError(DatabaseError):
 
 
 class DataTypeError(DatabaseError):
-    """Raised when no valid search criteria are provided for a database query."""
+    """Raised when an invalid data type is provided for a database query."""
 
-    def __init__(self, entity_name: str = None) -> None:
+    def __init__(self, entity_name: str = "") -> None:
         """Initializes the error with an optional entity name and a dynamic message."""
         message = "Invalid data type"
         if entity_name:
