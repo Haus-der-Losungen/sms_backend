@@ -1,19 +1,19 @@
+"""User repository for database operations."""
+
 import logging
-import random
-import uuid
-from typing import List, Optional
+from typing import List
 
 from databases import Database
+from pydantic import ValidationError
 
-from pydantic import EmailStr, ValidationError
 from src.utils.helpers import Helpers
-
 from src.models.token import AccessToken
 from src.db.repos.base import BaseRepository
 from src.errors.database import IncorrectCredentialsError, NotFoundError
 from src.models.user import UserCreate, UserInDb, UserLogin, UserUpdate
 from src.services.auth import AuthService
 
+# SQL Queries
 CREATE_USER_QUERY = """
 INSERT INTO users (
     user_id, role, pin_hash
@@ -32,10 +32,9 @@ SELECT * FROM users
 WHERE user_id = :user_id AND is_deleted = FALSE
 """
 
-
 UPDATE_USER_QUERY = """
 UPDATE users
-SET pin_hash = COALESCE(:pin_hash, pin_hash),
+SET role = COALESCE(:role, role),
     updated_at = CURRENT_TIMESTAMP
 WHERE user_id = :user_id
 RETURNING *
@@ -53,13 +52,20 @@ audit_logger = logging.getLogger("audit")
 
 
 class UserRepository(BaseRepository):
+    """Repository for user database operations."""
+
     def __init__(self, db: Database) -> None:
+        """Initialize the repository with database connection."""
         super().__init__(db)
 
     async def create_user(self, *, new_user: UserCreate) -> UserInDb:
+        """Create a new user in the database."""
         try:
+            # Generate sequential user ID
             user_id = Helpers.generate_sequential_id()
-            pin_hash = await AuthService().get_pin_hash(new_user.pin_hash)
+            
+            # Hash the plain PIN
+            pin_hash = await AuthService().get_pin_hash(new_user.pin)
 
             values = {
                 "user_id": user_id,
@@ -68,8 +74,13 @@ class UserRepository(BaseRepository):
             }
 
             created_user = await self.db.fetch_one(query=CREATE_USER_QUERY, values=values)
+            if not created_user:
+                audit_logger.error("Failed to create user in database.")
+                raise Exception("Failed to create user in database.")
+            
             audit_logger.info(f"User created successfully, ID: {user_id}")
-            return UserInDb(**created_user)
+            return UserInDb(**dict(created_user))
+            
         except ValidationError as e:
             audit_logger.error(f"Validation error creating user: {e}")
             raise
@@ -77,64 +88,67 @@ class UserRepository(BaseRepository):
             audit_logger.error(f"Error creating user: {e}")
             raise
 
-    async def get_user_by_id(self, *, user_id: uuid.UUID) -> UserInDb:
-        user = await self.db.fetch_one(query=GET_USER_BY_ID_QUERY, values={"user_id": str(user_id)})
+    async def get_user_by_id(self, *, user_id: str) -> UserInDb:
+        """Get a user by their ID."""
+        user = await self.db.fetch_one(query=GET_USER_BY_ID_QUERY, values={"user_id": user_id})
         if not user:
-            raise NotFoundError(entity_name="User", entity_identifier=str(user_id))
-        return UserInDb(**user)
-
- 
+            raise NotFoundError(entity_name="User", entity_identifier=user_id)
+        return UserInDb(**dict(user))
 
     async def get_users(self) -> List[UserInDb]:
+        """Get all active users."""
         users = await self.db.fetch_all(query=GET_USERS_QUERY)
-        return [UserInDb(**user) for user in users]
+        return [UserInDb(**dict(user)) for user in users]
 
-    async def update_user(self, *, user_id: uuid.UUID, user_update: UserUpdate) -> UserInDb:
-        try:
-            values = {"user_id": str(user_id)}
-            if user_update.email:
-                values["email"] = user_update.email
-            updated_user = await self.db.fetch_one(query=UPDATE_USER_QUERY, values=values)
-            if not updated_user:
-                raise NotFoundError(entity_name="User", entity_identifier=str(user_id))
-            audit_logger.info(f"User with ID: {user_id} updated successfully")
-            return UserInDb(**updated_user)
-        except ValidationError as e:
-            audit_logger.error(f"Validation error updating user: {e}")
-            raise
-        except Exception as e:
-            audit_logger.error(f"Error updating user {user_id}: {e}")
-            raise
+    async def update_user(self, *, user_id: str, user_update: UserUpdate) -> UserInDb:
+        """Update an existing user's information."""
+        values = {
+            "user_id": user_id,
+            "role": user_update.role
+        }
+        updated_user = await self.db.fetch_one(query=UPDATE_USER_QUERY, values=values)
+        if not updated_user:
+            raise NotFoundError(entity_name="User", entity_identifier=user_id)
+        
+        audit_logger.info(f"User with ID: {user_id} updated successfully")
+        return UserInDb(**dict(updated_user))
 
-    async def delete_user(self, *, user_id: uuid.UUID) -> UserInDb:
-        try:
-            deleted_user = await self.db.fetch_one(query=DELETE_USER_QUERY, values={"user_id": str(user_id)})
-            if not deleted_user:
-                raise NotFoundError(entity_name="User", entity_identifier=str(user_id))
-            audit_logger.info(f"User with ID: {user_id} deleted successfully")
-            return UserInDb(**deleted_user)
-        except Exception as e:
-            audit_logger.error(f"Error deleting user {user_id}: {e}")
-            raise
+    async def delete_user(self, *, user_id: str) -> UserInDb:
+        """Soft delete a user."""
+        deleted_user = await self.db.fetch_one(query=DELETE_USER_QUERY, values={"user_id": user_id})
+        if not deleted_user:
+            raise NotFoundError(entity_name="User", entity_identifier=user_id)
+        
+        audit_logger.info(f"User with ID: {user_id} deleted successfully")
+        return UserInDb(**dict(deleted_user))
 
     async def login(self, login_data: UserLogin) -> AccessToken:
-     email: EmailStr = login_data.email
-     password: str = login_data.password 
+        """Authenticate user and return access token."""
+        try:
+            plain_pin = login_data.pin
+            user_id = login_data.user_id
 
-     print("email: ", email)
-     print("password: ", password)
+            # Get user from database
+            user = await self.get_user_by_id(user_id=user_id)
+            
+            # Verify PIN
+            if not user or not await AuthService().verify_pin(plain_pin, user.pin_hash):
+                raise IncorrectCredentialsError()
 
-     user = await self.get_user_by_email(email=email)
+            # Create access token
+            access_token = AuthService().create_access_token(
+                data={"user_id": str(user.user_id)}
+            )
 
-     if not user or not await AuthService().verify_password(password, user.password_hash):
-        raise IncorrectCredentialsError()
-
-     access_token = AuthService().create_access_token(
-        data={"user_id": str(user.user_id)}
-    )
-
-     return AccessToken(
-        access_token=access_token,
-        token_type="bearer"
-    )
-
+            audit_logger.info(f"User login successful: {user_id}")
+            return AccessToken(
+                access_token=access_token,
+                token_type="bearer"
+            )
+            
+        except IncorrectCredentialsError:
+            audit_logger.warning(f"Incorrect credentials for user ID: {login_data.user_id}")
+            raise
+        except Exception as e:
+            audit_logger.error(f"Login error for user ID: {login_data.user_id} - {e}")
+            raise
