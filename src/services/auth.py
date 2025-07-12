@@ -2,7 +2,6 @@
 
 from datetime import datetime, timedelta
 
-import bcrypt
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -18,7 +17,8 @@ from src.errors.core import InvalidTokenError
 class AuthService:
     """Auth service."""
 
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    # Use sha256_crypt for easier development (more predictable than bcrypt)
+    pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
     def create_access_token(
         self, data: dict, expires_delta: timedelta | None = None
@@ -61,12 +61,10 @@ class AuthService:
 
     @staticmethod
     async def get_pin_hash(pin: str) -> str:
-        """Hash a PIN using bcrypt"""
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(pin.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
+        """Hash a PIN using sha256_crypt (more predictable than bcrypt)"""
+        return AuthService.pwd_context.hash(pin)
 
     @staticmethod
     async def verify_pin(plain_pin: str, hashed_pin: str) -> bool:
         """Verify a PIN against its hashed version"""
-        return bcrypt.checkpw(plain_pin.encode('utf-8'), hashed_pin.encode('utf-8'))
+        return AuthService.pwd_context.verify(plain_pin, hashed_pin)

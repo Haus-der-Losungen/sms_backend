@@ -57,22 +57,22 @@ def create_users_table() -> None:
             {
                 "user_id": "1000001",
                 "role": "admin",
-                "pin_hash": "$2b$12$eKqE5yysrvmfEbdpWc2k..IA7aQUAWI5tCWKUSSOv3gOa5mnTwXZq",  # PIN: 123456
+                "pin_hash": "$5$rounds=535000$mJI/s6D18BiWkf7G$/SrYBhDrWTIDvzgcre3uzbpG0HI4lAd1GN2aWTjzJ56",  # PIN: 123456
             },
             {
                 "user_id": "1000002",
                 "role": "staff",
-                "pin_hash": "$2b$12$eKqE5yysrvmfEbdpWc2k..IA7aQUAWI5tCWKUSSOv3gOa5mnTwXZq",  # PIN: 123456
+                "pin_hash": "$5$rounds=535000$mJI/s6D18BiWkf7G$/SrYBhDrWTIDvzgcre3uzbpG0HI4lAd1GN2aWTjzJ56",  # PIN: 123456
             },
             {
                 "user_id": "1000003",
                 "role": "student",
-                "pin_hash": "$2b$12$eKqE5yysrvmfEbdpWc2k..IA7aQUAWI5tCWKUSSOv3gOa5mnTwXZq",  # PIN: 123456
+                "pin_hash": "$5$rounds=535000$mJI/s6D18BiWkf7G$/SrYBhDrWTIDvzgcre3uzbpG0HI4lAd1GN2aWTjzJ56",  # PIN: 123456
             },
             {
                 "user_id": "1000004",
                 "role": "other",
-                "pin_hash": "$2b$12$eKqE5yysrvmfEbdpWc2k..IA7aQUAWI5tCWKUSSOv3gOa5mnTwXZq",  # PIN: 123456
+                "pin_hash": "$5$rounds=535000$mJI/s6D18BiWkf7G$/SrYBhDrWTIDvzgcre3uzbpG0HI4lAd1GN2aWTjzJ56",  # PIN: 123456
             },
         ],
     )
