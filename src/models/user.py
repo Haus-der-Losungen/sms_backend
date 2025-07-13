@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, constr
+from typing import Optional
 
 from src.enums.users import UserRole
 from src.models.base import CoreModel, TimestampMixin, DeleteMixin, UserIDModelMixin
@@ -8,10 +9,10 @@ class UserBase(CoreModel):
     """Base user model with common fields"""
     role: UserRole = Field(UserRole.STUDENT, description="User Role")
 
-# Model for user creation - no IDs, plain PIN
+# Model for user creation - no IDs, PIN is optional (will be auto-generated if not provided)
 class UserCreate(UserBase):
     """Model for creating a new user"""
-    pin: str = Field(..., min_length=4, max_length=10, description="User PIN (plain text)")
+    pin: Optional[str] = Field(None, description="User PIN (plain text, optional - will be auto-generated if not provided)")
 
 # Model for updating user - only role can be updated
 class UserUpdate(CoreModel):

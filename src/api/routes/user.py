@@ -28,15 +28,31 @@ async def create_user(
     user_repo: UserRepository = Depends(get_repository(UserRepository)),
 ) -> UserProfileCreateResponse:
     """Create a new user with profile and return user_id, pin, and profile_id."""
-    user_profile_in_db = await user_profile_repo.create_user_profile(
+    
+    # Debug the incoming request
+    print(f"Received user PIN: {user_profile_create.user.pin}")
+    print(f"Type of received PIN: {type(user_profile_create.user.pin)}")
+    print(f"Received PIN is None: {user_profile_create.user.pin is None}")
+    
+    user_profile_in_db, generated_pin = await user_profile_repo.create_user_profile(
         new_user=user_profile_create.user,
         new_profile=user_profile_create.profile,
     )
-    return UserProfileCreateResponse(
+    
+    print(f"Generated PIN in endpoint: {generated_pin}")  # Debug log
+    print(f"Type of generated_pin: {type(generated_pin)}")  # Debug log
+    print(f"Generated PIN repr: {repr(generated_pin)}")  # Debug log
+    
+    response_data = UserProfileCreateResponse(
         user_id=user_profile_in_db.user.user_id,
-        pin=user_profile_create.user.pin,  # Return the plain PIN from request
+        pin=generated_pin,  # Return the generated PIN
         profile_id=str(user_profile_in_db.profile.profile_id)
     )
+    
+    print(f"Response data pin: {response_data.pin}")  # Debug log
+    print(f"Response data type: {type(response_data.pin)}")  # Debug log
+    
+    return response_data
 
 
 @user_router.get(

@@ -2,6 +2,7 @@
 
 import os
 import json
+import random
 from pathlib import Path
 
 
@@ -45,4 +46,11 @@ class Helpers:
         cls._save_last_id(new_id)
         
         return str(new_id)
+    
+    @classmethod
+    def generate_pin(cls) -> str:
+        """Generate a random 6-digit PIN for user creation."""
+        pin = str(random.randint(100000, 999999))
+        print(f"Generated PIN: {pin}")  # Debug log
+        return pin
 

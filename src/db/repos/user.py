@@ -58,14 +58,22 @@ class UserRepository(BaseRepository):
         """Initialize the repository with database connection."""
         super().__init__(db)
 
-    async def create_user(self, *, new_user: UserCreate) -> UserInDb:
+    async def create_user(self, *, new_user: UserCreate) -> tuple[UserInDb, str]:
         """Create a new user in the database."""
         try:
             # Generate sequential user ID
             user_id = Helpers.generate_sequential_id()
             
+            # Generate PIN if not provided or if "string" is passed (treat as no PIN)
+            if new_user.pin is None or new_user.pin == "string":
+                pin = Helpers.generate_pin()
+                print(f"Generated new PIN: {pin}")  # Debug log
+            else:
+                pin = new_user.pin
+                print(f"Using provided PIN: {pin}")  # Debug log
+            
             # Hash the plain PIN
-            pin_hash = await AuthService().get_pin_hash(new_user.pin)
+            pin_hash = await AuthService().get_pin_hash(pin)
 
             values = {
                 "user_id": user_id,
@@ -79,7 +87,8 @@ class UserRepository(BaseRepository):
                 raise Exception("Failed to create user in database.")
             
             audit_logger.info(f"User created successfully, ID: {user_id}")
-            return UserInDb(**dict(created_user))
+            print(f"Returning PIN from create_user: {pin}")  # Debug log
+            return UserInDb(**dict(created_user)), pin
             
         except ValidationError as e:
             audit_logger.error(f"Validation error creating user: {e}")
