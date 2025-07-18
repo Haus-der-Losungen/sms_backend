@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from src.api.dependencies.auth import get_current_user
 from src.api.dependencies.database import get_repository
 from src.db.repos.profiles import ProfileRepository
-from src.models.profiles import ProfilePublic, ProfileUpdate
+from src.models.profiles import ProfilePublic, ProfileUpdate, ProfileCreate
 from src.models.user_profile import UserProfileInDb
 
 profile_router = APIRouter()
@@ -70,6 +70,20 @@ async def get_current_user_profile(
 ) -> ProfilePublic:
     """Get the current user's profile details."""
     return current_user.profile
+
+
+@profile_router.post(
+    "",
+    response_model=ProfilePublic,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_profile(
+    profile: ProfileCreate,
+    profile_repo: ProfileRepository = Depends(get_repository(ProfileRepository)),
+) -> ProfilePublic:
+    """Create a new profile."""
+    created = await profile_repo.create_profile(new_profile=profile)
+    return ProfilePublic(**created.dict())
 
 
 @profile_router.patch(
