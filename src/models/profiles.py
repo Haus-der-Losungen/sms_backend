@@ -10,6 +10,9 @@ from src.models.base import (
     DeleteMixin,
     UserIDModelMixin,
 )
+from src.enums.gender import GenderEnum
+from src.enums.marital_status import MaritalStatusEnum
+
 
 
 # Base model for profile creation - minimal fields only
@@ -19,10 +22,10 @@ class ProfileBase(CoreModel):
     last_name: str = Field(..., max_length=50, description="Last name of the user")
     phone: str = Field(..., max_length=20, description="Phone number of the user")
     email: EmailStr = Field(..., description="Email address of the user")
-    gender: str = Field(..., max_length=10, description="Gender of user")
+    gender: GenderEnum = Field(..., description="Gender of user")
     date_of_birth: str = Field(..., description="Date of birth in YYYY-MM-DD format")
     photo: str = Field(..., description="Photo path or URL")
-    marital_status: str = Field(..., description="Marital status")
+    marital_status: MaritalStatusEnum = Field(..., description="Marital status")
     emergency_contact: str = Field(..., description="Emergency contact")
 
     @field_validator("phone")
@@ -36,11 +39,8 @@ class ProfileBase(CoreModel):
 
     @field_validator("gender")
     @classmethod
-    def validate_gender(cls, gender: str) -> str:
-        allowed_genders = {"male", "female", "other"}
-        if gender.lower() not in allowed_genders:
-            raise ValueError(f"Gender must be one of {allowed_genders}.")
-        return gender.capitalize()
+    def validate_gender(cls, gender: GenderEnum) -> GenderEnum:
+        return gender
 
     @field_validator("email")
     @classmethod
@@ -85,10 +85,10 @@ class ProfileUpdate(CoreModel):
     last_name: Optional[str] = Field(None, max_length=50, description="Last name of the user")
     phone: Optional[str] = Field(None, max_length=20, description="Phone number of the user")
     email: Optional[EmailStr] = Field(None, description="Email address of the user")
-    gender: Optional[str] = Field(None, max_length=10, description="Gender of user")
+    gender: Optional[GenderEnum] = Field(None, description="Gender of user")
     date_of_birth: Optional[str] = Field(None, description="Date of birth in YYYY-MM-DD format")
     photo: Optional[str] = Field(None, description="Photo path or URL")
-    marital_status: Optional[str] = Field(None, description="Marital status")
+    marital_status: Optional[MaritalStatusEnum] = Field(None, description="Marital status")
     emergency_contact: Optional[str] = Field(None, description="Emergency contact")
 
     @field_validator("phone")
@@ -103,12 +103,7 @@ class ProfileUpdate(CoreModel):
 
     @field_validator("gender")
     @classmethod
-    def validate_gender(cls, value: Optional[str]) -> Optional[str]:
-        if value is not None:
-            allowed_genders = {"male", "female", "other"}
-            if value.lower() not in allowed_genders:
-                raise ValueError(f"Gender must be one of {allowed_genders}.")
-            return value.capitalize()
+    def validate_gender(cls, value: Optional[GenderEnum]) -> Optional[GenderEnum]:
         return value
 
     @field_validator("email")
