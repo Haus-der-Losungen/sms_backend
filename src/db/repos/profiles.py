@@ -14,10 +14,10 @@ from src.models.profiles import ProfileCreate, ProfileInDb, ProfileUpdate
 # SQL Queries
 CREATE_PROFILE_QUERY = """
 INSERT INTO profiles (
-  profile_id, user_id, first_name, last_name, phone, gender, email
+  profile_id, user_id, first_name, last_name, phone, gender, email, date_of_birth, photo, marital_status, emergency_contact
 )
 VALUES (
-  :profile_id, :user_id, :first_name, :last_name, :phone, :gender, :email
+  :profile_id, :user_id, :first_name, :last_name, :phone, :gender, :email, :date_of_birth, :photo, :marital_status, :emergency_contact
 )
 RETURNING *
 """
@@ -49,6 +49,11 @@ SET
     last_name = COALESCE(:last_name, last_name),
     phone = COALESCE(:phone, phone),
     gender = COALESCE(:gender, gender),
+    email = COALESCE(:email, email),
+    date_of_birth = COALESCE(:date_of_birth, date_of_birth),
+    photo = COALESCE(:photo, photo),
+    marital_status = COALESCE(:marital_status, marital_status),
+    emergency_contact = COALESCE(:emergency_contact, emergency_contact),
     updated_at = CURRENT_TIMESTAMP
 WHERE profile_id = :profile_id AND is_deleted = FALSE
 RETURNING *
@@ -90,6 +95,10 @@ class ProfileRepository(BaseRepository):
                 "phone": new_profile.phone,
                 "gender": new_profile.gender,
                 "email": new_profile.email.lower() if new_profile.email else None,
+                "date_of_birth": new_profile.date_of_birth,
+                "photo": new_profile.photo,
+                "marital_status": new_profile.marital_status,
+                "emergency_contact": new_profile.emergency_contact,
             }
 
             created = await self.db.fetch_one(query=CREATE_PROFILE_QUERY, values=values)
