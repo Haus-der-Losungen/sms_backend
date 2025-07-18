@@ -18,8 +18,12 @@ class ProfileBase(CoreModel):
     first_name: str = Field(..., max_length=50, description="First name of the user")
     last_name: str = Field(..., max_length=50, description="Last name of the user")
     phone: str = Field(..., max_length=20, description="Phone number of the user")
-    email: Optional[EmailStr] = Field(None, description="Email address of the user")
+    email: EmailStr = Field(..., description="Email address of the user")
     gender: str = Field(..., max_length=10, description="Gender of user")
+    date_of_birth: str = Field(..., description="Date of birth in YYYY-MM-DD format")
+    photo: str = Field(..., description="Photo path or URL")
+    marital_status: str = Field(..., description="Marital status")
+    emergency_contact: str = Field(..., description="Emergency contact")
 
     @field_validator("phone")
     @classmethod
@@ -40,8 +44,8 @@ class ProfileBase(CoreModel):
 
     @field_validator("email")
     @classmethod
-    def lowercase_email(cls, value: Optional[EmailStr]) -> Optional[EmailStr]:
-        return value.lower() if value else value
+    def lowercase_email(cls, value: EmailStr) -> EmailStr:
+        return value.lower()
 
 
 # Model for profile creation - no IDs
@@ -59,6 +63,10 @@ class ProfileUpdate(CoreModel):
     phone: Optional[str] = Field(None, max_length=20, description="Phone number of the user")
     email: Optional[EmailStr] = Field(None, description="Email address of the user")
     gender: Optional[str] = Field(None, max_length=10, description="Gender of user")
+    date_of_birth: Optional[str] = Field(None, description="Date of birth in YYYY-MM-DD format")
+    photo: Optional[str] = Field(None, description="Photo path or URL")
+    marital_status: Optional[str] = Field(None, description="Marital status")
+    emergency_contact: Optional[str] = Field(None, description="Emergency contact")
 
     @field_validator("phone")
     @classmethod
