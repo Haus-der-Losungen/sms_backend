@@ -170,8 +170,8 @@ def create_profiles_table() -> None:
 def create_admins_table() -> None:
     admins_table = op.create_table(
         "admins",
-        sa.Column('user_id', sa.String(7), sa.ForeignKey('users.user_id'), primary_key=True, nullable=False, unique=True),
-        sa.Column('is_super_admin', sa.Boolean(), nullable=False, server_default=sa.text("0")),  # SQLite uses 0/1 for booleans
+        sa.Column('admin_id', sa.String(7), sa.ForeignKey('users.user_id'), primary_key=True, nullable=False, unique=True),
+        sa.Column('is_admin', sa.Boolean(), nullable=False, server_default=sa.text("0")),  # SQLite uses 0/1 for booleans
         sa.Column('permissions', sa.JSON(), nullable=False, server_default=sa.text("'{}'")),  # Use sa.JSON for cross-db
         *timestamps(indexed=True),
     )
@@ -179,26 +179,26 @@ def create_admins_table() -> None:
         admins_table,
         [
             {
-                "user_id": "1000001",
-                "is_super_admin": 1,
+                "admin_id": "1000001",
+                "is_admin": 1,
                 "permissions": '{}',
                 
             },
             {
-                "user_id": "1000002",
-                "is_super_admin": 0,
+                "admin_id": "1000002",
+                "is_admin": 0,
                 "permissions": '{}',
                
             },
             {
-                "user_id": "1000003",
-                "is_super_admin": 0,
+                "admin_id": "1000003",
+                "is_admin": 0,
                 "permissions": '{}',
                
             },
             {
-                "user_id": "1000004",
-                "is_super_admin": 0,
+                "admin_id": "1000004",
+                "is_admin": 0,
                 "permissions": '{}',
                
             },
