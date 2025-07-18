@@ -8,6 +8,7 @@ Create Date: 2025-06-29 21:12:17.792942
 from typing import Sequence, Union, Tuple
 from alembic import op
 import sqlalchemy as sa
+import datetime
 
 # revision identifiers, used by Alembic.
 revision: str = 'a41f8611536a'
@@ -88,6 +89,10 @@ def create_profiles_table() -> None:
         sa.Column("last_name", sa.String(50), nullable=False),
         sa.Column("phone", sa.String(20), nullable=False),
         sa.Column("gender", sa.String(10), nullable=False),
+        sa.Column("date_of_birth", sa.Date(), nullable=True),
+        sa.Column("photo", sa.String(255), nullable=True),  # Store photo path or URL
+        sa.Column("marital_status", sa.String(20), nullable=True),
+        sa.Column("emergency_contact", sa.String(20), nullable=True),
         *timestamps(indexed=True),
     )
 
@@ -102,7 +107,13 @@ def create_profiles_table() -> None:
                 "last_name": "Sem",
                 "phone": "1234567890",
                 "gender": "female",
-               
+                "date_of_birth": datetime.date(1970, 1, 1),
+                "photo": "https://example.com/photo.jpg",
+                "marital_status": "single",
+                "emergency_contact": "1234567890",
+                "created_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "updated_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "is_deleted": 0,
             },
             {
                 "profile_id": "1d4c2b91-89ae-4c21-9088-6e4c8208d263",
@@ -112,7 +123,13 @@ def create_profiles_table() -> None:
                 "last_name": "Annan",
                 "phone": "1234567891",
                 "gender": "male",
-                
+                "date_of_birth": datetime.date(1970, 1, 1),
+                "photo": "https://example.com/photo.jpg",
+                "marital_status": "single",
+                "emergency_contact": "1234567891",
+                "created_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "updated_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "is_deleted": 0,
             },
             {
                 "profile_id": "94d99c7b-1ae9-4b27-8ca2-3abdf1b4d740",
@@ -122,7 +139,13 @@ def create_profiles_table() -> None:
                 "last_name": "Kuzagbe",
                 "phone": "1234567892",
                 "gender": "male",
-              
+                "date_of_birth": datetime.date(1970, 1, 1),
+                "photo": "https://example.com/photo.jpg",
+                "marital_status": "single",
+                "emergency_contact": "1234567892",
+                "created_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "updated_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "is_deleted": 0,
             },
             {
                 "profile_id": "30e4de4f-729e-4f1e-9a79-b33954fd0834",
@@ -132,30 +155,55 @@ def create_profiles_table() -> None:
                 "last_name": "Rapha",
                 "phone": "1234567893",
                 "gender": "female",
-                
+                "date_of_birth": datetime.date(1970, 1, 1),
+                "photo": "https://example.com/photo.jpg",
+                "marital_status": "single",
+                "emergency_contact": "1234567893",
+                "created_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "updated_at": datetime.datetime(1970, 1, 1, 0, 0, 0),
+                "is_deleted": 0,
             },
         ],
     )
 
+
 def create_admins_table() -> None:
     admins_table = op.create_table(
         "admins",
-     sa.Column("admin_id", sa.String(10), primary_key=True),  # Admin ID
-        sa.Column("user_id", sa.String(10), sa.ForeignKey("users.user_id"), nullable=False),
-        sa.Column("role", sa.String(255), sa.ForeignKey("users.role"), nullable=False),
-        sa.Column("first_name", sa.String(100), nullable=False),
-        sa.Column("last_name", sa.String(100), nullable=False),
-        sa.Column("date_of_birth", sa.Date(), nullable=True),
-        sa.Column("photo", sa.String(255), nullable=True),  # Store photo path or URL
-        sa.Column("gender", sa.String(10), nullable=True),
-        sa.Column("marital_status", sa.String(20), nullable=True),
-        sa.Column("email", sa.String(255), nullable=False, unique=True),
-        sa.Column("phone_number", sa.String(20), nullable=True),
-        sa.Column("emergency_contact", sa.String(20), nullable=True),
+        sa.Column('user_id', sa.String(7), sa.ForeignKey('users.user_id'), primary_key=True, nullable=False, unique=True),
+        sa.Column('is_super_admin', sa.Boolean(), nullable=False, server_default=sa.text("0")),  # SQLite uses 0/1 for booleans
+        sa.Column('permissions', sa.JSON(), nullable=False, server_default=sa.text("'{}'")),  # Use sa.JSON for cross-db
         *timestamps(indexed=True),
     )
-
-
+    op.bulk_insert(
+        admins_table,
+        [
+            {
+                "user_id": "1000001",
+                "is_super_admin": 1,
+                "permissions": '{}',
+                
+            },
+            {
+                "user_id": "1000002",
+                "is_super_admin": 0,
+                "permissions": '{}',
+               
+            },
+            {
+                "user_id": "1000003",
+                "is_super_admin": 0,
+                "permissions": '{}',
+               
+            },
+            {
+                "user_id": "1000004",
+                "is_super_admin": 0,
+                "permissions": '{}',
+               
+            },
+        ],
+    )
 
 
 def upgrade() -> None:
@@ -164,5 +212,6 @@ def upgrade() -> None:
     create_admins_table()
 
 def downgrade() -> None:
+    op.execute("DROP TABLE IF EXISTS admins")
     op.execute("DROP TABLE IF EXISTS profiles")
     op.execute("DROP TABLE IF EXISTS users")
