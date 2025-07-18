@@ -137,11 +137,31 @@ def create_profiles_table() -> None:
         ],
     )
 
+def create_admins_table() -> None:
+    admins_table = op.create_table(
+        "admins",
+     sa.Column("admin_id", sa.String(10), primary_key=True),  # Admin ID
+        sa.Column("user_id", sa.String(10), sa.ForeignKey("users.user_id"), nullable=False),
+        sa.Column("role", sa.String(255), sa.ForeignKey("users.role"), nullable=False),
+        sa.Column("first_name", sa.String(100), nullable=False),
+        sa.Column("last_name", sa.String(100), nullable=False),
+        sa.Column("date_of_birth", sa.Date(), nullable=True),
+        sa.Column("photo", sa.String(255), nullable=True),  # Store photo path or URL
+        sa.Column("gender", sa.String(10), nullable=True),
+        sa.Column("marital_status", sa.String(20), nullable=True),
+        sa.Column("email", sa.String(255), nullable=False, unique=True),
+        sa.Column("phone_number", sa.String(20), nullable=True),
+        sa.Column("emergency_contact", sa.String(20), nullable=True),
+        *timestamps(indexed=True),
+    )
+
+
+
 
 def upgrade() -> None:
     create_users_table()
     create_profiles_table()
-
+    create_admins_table()
 
 def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS profiles")
