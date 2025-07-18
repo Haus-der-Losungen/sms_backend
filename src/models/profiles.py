@@ -47,6 +47,29 @@ class ProfileBase(CoreModel):
     def lowercase_email(cls, value: EmailStr) -> EmailStr:
         return value.lower()
 
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_date_of_birth(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Date of birth is required.")
+        return value
+    
+    @field_validator("photo")
+    @classmethod
+    def validate_photo(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Photo is required.")
+        return value
+    
+    @field_validator("emergency_contact")
+    @classmethod
+    def validate_emergency_contact(cls, value: str) -> str:
+        if not value.isdigit():
+            raise ValueError("Phone number must contain only digits.")
+        if not (7 <= len(value) <= 20):
+            raise ValueError("Phone number must be between 7 and 20 digits.")
+        return value
+
 
 # Model for profile creation - no IDs
 class ProfileCreate(ProfileBase):
@@ -92,6 +115,30 @@ class ProfileUpdate(CoreModel):
     @classmethod
     def lowercase_email(cls, value: Optional[EmailStr]) -> Optional[EmailStr]:
         return value.lower() if value else value
+    
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_date_of_birth(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Date of birth is required.")
+        return value
+    
+    @field_validator("photo")
+    @classmethod
+    def validate_photo(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Photo is required.")
+        return value
+    
+    @field_validator("emergency_contact")
+    @classmethod
+    def validate_emergency_contact(cls, value: str) -> str:
+        if not value.isdigit():
+            raise ValueError("Phone number must contain only digits.")
+        if not (7 <= len(value) <= 20):
+            raise ValueError("Phone number must be between 7 and 20 digits.")
+        return value
+
 
 
 # Model for public API responses - includes IDs and timestamps
