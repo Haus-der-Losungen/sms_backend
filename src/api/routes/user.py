@@ -56,43 +56,6 @@ async def create_user(
     return response_data
 
 
-@user_router.get(
-    "/get-users",
-    response_model=List[UserPublic],
-    status_code=status.HTTP_200_OK,
-)
-async def get_users(
-    user_repo: UserRepository = Depends(get_repository(UserRepository)),
-) -> List[UserPublic]:
-    """Get all active users."""
-    users_in_db = await user_repo.get_users()
-    # Create user dict excluding pin_hash field
-    users_public = []
-    for user in users_in_db:
-        user_dict = user.dict()
-        user_dict.pop('pin_hash', None)  # Remove pin_hash field
-        users_public.append(UserPublic(**user_dict))
-    return users_public
-
-
-@user_router.get(
-    "/get-user-by-id/{user_id}",
-    response_model=UserPublic,
-    status_code=status.HTTP_200_OK,
-)
-async def get_user_by_id(
-    user_id: str,
-    user_repo: UserRepository = Depends(get_repository(UserRepository)),
-) -> UserPublic:
-    """Get a user by their ID."""
-    try:
-        user_in_db = await user_repo.get_user_by_id(user_id=user_id)
-        user_dict = user_in_db.dict()
-        user_dict.pop('pin_hash', None)  # Remove pin_hash field
-        return UserPublic(**user_dict)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
 
 @user_router.put(
     "/update-user/{user_id}",
