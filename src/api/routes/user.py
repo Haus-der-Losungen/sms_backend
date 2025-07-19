@@ -66,7 +66,13 @@ async def get_users(
 ) -> List[UserPublic]:
     """Get all active users."""
     users_in_db = await user_repo.get_users()
-    return [UserPublic(**user.dict()) for user in users_in_db]
+    # Create user dict excluding pin_hash field
+    users_public = []
+    for user in users_in_db:
+        user_dict = user.dict()
+        user_dict.pop('pin_hash', None)  # Remove pin_hash field
+        users_public.append(UserPublic(**user_dict))
+    return users_public
 
 
 @user_router.get(
@@ -81,7 +87,9 @@ async def get_user_by_id(
     """Get a user by their ID."""
     try:
         user_in_db = await user_repo.get_user_by_id(user_id=user_id)
-        return UserPublic(**user_in_db.dict())
+        user_dict = user_in_db.dict()
+        user_dict.pop('pin_hash', None)  # Remove pin_hash field
+        return UserPublic(**user_dict)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -98,7 +106,10 @@ async def update_user(
 ) -> UserPublic:
     """Update an existing user's information."""
     try:
-        return await user_repo.update_user(user_id=user_id, user_update=user_update)
+        updated_user = await user_repo.update_user(user_id=user_id, user_update=user_update)
+        user_dict = updated_user.dict()
+        user_dict.pop('pin_hash', None)  # Remove pin_hash field
+        return UserPublic(**user_dict)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
