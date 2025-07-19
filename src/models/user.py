@@ -3,6 +3,7 @@ from typing import Optional
 
 from src.enums.users import UserRole
 from src.models.base import CoreModel, TimestampMixin, DeleteMixin, UserIDModelMixin
+from src.models.profiles import ProfilePublic
 
 # Base model for user creation - minimal fields only
 class UserBase(CoreModel):
@@ -40,3 +41,10 @@ class UserMe(CoreModel):
     """Model for /me endpoint - shows user ID and PIN hash"""
     user_id: str = Field(..., description="User ID")
     pin_hash: constr(min_length=6, max_length=268) = Field(..., description="User PIN (hashed)")  # type: ignore
+
+# Model for /me endpoint with role information
+class UserMeWithRole(CoreModel):
+    """Model for /me endpoint - shows user ID, role, and profile information"""
+    user_id: str = Field(..., description="User ID")
+    role: UserRole = Field(..., description="User Role")
+    profile: ProfilePublic = Field(..., description="User Profile")
