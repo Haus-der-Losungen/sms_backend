@@ -50,7 +50,7 @@ class AuthService:
         self, token: str, credentials_exception: Exception = InvalidTokenError()
     ) -> str:
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             user_id = payload.get("user_id")
             if not user_id:
                 raise credentials_exception  # noqa
@@ -58,6 +58,20 @@ class AuthService:
             raise credentials_exception
 
         return user_id
+
+    async def verify_token_with_role(
+        self, token: str, credentials_exception: Exception = InvalidTokenError()
+    ) -> dict:
+        """Verify token and return both user_id and role."""
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("user_id")
+            role = payload.get("role")
+            if not user_id or not role:
+                raise credentials_exception  # noqa
+            return {"user_id": user_id, "role": role}
+        except JWTError:
+            raise credentials_exception
 
     @staticmethod
     async def get_pin_hash(pin: str) -> str:
