@@ -144,9 +144,12 @@ class UserRepository(BaseRepository):
             if not user or not await AuthService().verify_pin(plain_pin, user.pin_hash):
                 raise IncorrectCredentialsError()
 
-            # Create access token
+            # Create access token with user_id and role
             access_token = AuthService().create_access_token(
-                data={"user_id": str(user.user_id)}
+                data={
+                    "user_id": str(user.user_id),
+                    "role": user.role.value  # Include role in token
+                }
             )
 
             audit_logger.info(f"User login successful: {user_id}")
