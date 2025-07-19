@@ -4,15 +4,16 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from typing import List
 
 from src.models.profiles import ProfileInDb, ProfilePublic
-from src.api.dependencies.auth import get_current_user
+from src.api.dependencies.auth import get_current_user, get_current_user_with_role, require_admin, require_staff
 from src.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from src.models.token import AccessToken
 from src.db.repos.user import UserRepository
-from src.models.user import UserLogin, UserPublic, UserUpdate, UserMe
+from src.models.user import UserLogin, UserPublic, UserUpdate, UserMe, UserMeWithRole
 from src.api.dependencies.database import get_repository
 from src.errors.database import NotFoundError
 from src.db.repos.user_profile import UserProfileRepository
 from src.models.user_profile import UserProfileCreate, UserProfilePublic, UserProfileCreateResponse
+from src.models.user import UserInDb
 
 user_router = APIRouter()
 
@@ -153,15 +154,51 @@ async def user_logout(
     return {"message": "Logged out."}
 
 
-@user_router.get("/me", response_model=UserMe, status_code=status.HTTP_200_OK)
+@user_router.get("/me", response_model=UserMeWithRole, status_code=status.HTTP_200_OK)
 async def get_current_user_info(
-    current_user: ProfileInDb = Depends(get_current_user),
-    user_repo: UserRepository = Depends(get_repository(UserRepository)),
-) -> UserMe:
-    """Get current user's ID and PIN hash."""
-    try:
-        # Get the full user data including PIN from the database
-        user_in_db = await user_repo.get_user_by_id(user_id=str(current_user.user_id))
-        return UserMe(user_id=user_in_db.user_id, pin_hash=user_in_db.pin_hash)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    current_user_data: tuple[UserInDb, ProfileInDb] = Depends(get_current_user_with_role),
+) -> UserMeWithRole:
+    """Get current user's ID, role, and profile information."""
+    user, profile = current_user_data
+    return UserMeWithRole(
+        user_id=user.user_id,
+        role=user.role,
+        profile=ProfilePublic(**profile.dict())
+    )
+
+
+# Role-protected endpoints examples
+@user_router.get(
+    "/admin-only",
+    response_model=dict,
+    status_code=status.HTTP_200_OK,
+)
+async def admin_only_endpoint(
+    current_user_data: tuple[UserInDb, ProfileInDb] = Depends(require_admin),
+) -> dict:
+    """Admin-only endpoint example."""
+    user, profile = current_user_data
+    return {
+        "message": "Admin access granted",
+        "user_id": user.user_id,
+        "role": user.role.value,
+        "user_name": f"{profile.first_name} {profile.last_name}"
+    }
+
+
+@user_router.get(
+    "/staff-and-admin",
+    response_model=dict,
+    status_code=status.HTTP_200_OK,
+)
+async def staff_and_admin_endpoint(
+    current_user_data: tuple[UserInDb, ProfileInDb] = Depends(require_staff),
+) -> dict:
+    """Staff and admin endpoint example."""
+    user, profile = current_user_data
+    return {
+        "message": "Staff/Admin access granted",
+        "user_id": user.user_id,
+        "role": user.role.value,
+        "user_name": f"{profile.first_name} {profile.last_name}"
+    }
