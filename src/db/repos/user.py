@@ -97,6 +97,18 @@ class UserRepository(BaseRepository):
             audit_logger.error(f"Error creating user: {e}")
             raise
 
+    async def get_user_by_id(self, *, user_id: str) -> UserInDb:
+        """Get a user by their ID."""
+        user = await self.db.fetch_one(query=GET_USER_BY_ID_QUERY, values={"user_id": user_id})
+        if not user:
+            raise NotFoundError(entity_name="User", entity_identifier=user_id)
+        try:
+            return UserInDb(**dict(user))
+        except ValidationError as e:
+            audit_logger.error(f"User with ID {user_id} has invalid data: {e}")
+            raise NotFoundError(entity_name="User", entity_identifier=user_id)
+
+
 
     async def update_user(self, *, user_id: str, user_update: UserUpdate) -> UserInDb:
         """Update an existing user's information."""
