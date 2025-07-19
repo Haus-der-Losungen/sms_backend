@@ -6,6 +6,6 @@ class UserRole(str, Enum):
     """Enum for user roles."""
 
     STUDENT = "student"
-    Staff = "staff"
+    STAFF = "staff"
     ADMIN = "admin"
     SUPER_ADMIN = "super_admin"

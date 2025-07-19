@@ -102,12 +102,25 @@ class UserRepository(BaseRepository):
         user = await self.db.fetch_one(query=GET_USER_BY_ID_QUERY, values={"user_id": user_id})
         if not user:
             raise NotFoundError(entity_name="User", entity_identifier=user_id)
-        return UserInDb(**dict(user))
+        try:
+            return UserInDb(**dict(user))
+        except ValidationError as e:
+            audit_logger.error(f"User with ID {user_id} has invalid data: {e}")
+            raise NotFoundError(entity_name="User", entity_identifier=user_id)
 
     async def get_users(self) -> List[UserInDb]:
         """Get all active users."""
         users = await self.db.fetch_all(query=GET_USERS_QUERY)
-        return [UserInDb(**dict(user)) for user in users]
+        valid_users = []
+        for user in users:
+            try:
+                valid_users.append(UserInDb(**dict(user)))
+            except ValidationError as e:
+                # Log invalid users but don't fail the entire request
+                user_id = getattr(user, 'user_id', 'unknown')
+                audit_logger.warning(f"Skipping user with invalid data: {user_id} - {e}")
+                continue
+        return valid_users
 
     async def update_user(self, *, user_id: str, user_update: UserUpdate) -> UserInDb:
         """Update an existing user's information."""
@@ -148,7 +161,7 @@ class UserRepository(BaseRepository):
             access_token = AuthService().create_access_token(
                 data={
                     "user_id": str(user.user_id),
-                    "role": user.role.value  # Include role in token
+                    "role": user.role  # Include role in token (already a string)
                 }
             )
 

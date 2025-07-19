@@ -72,7 +72,7 @@ def create_users_table() -> None:
             },
             {
                 "user_id": "1000004",
-                "role": "other",
+                "role": "super_admin",
                 "pin_hash": "$5$rounds=535000$mJI/s6D18BiWkf7G$/SrYBhDrWTIDvzgcre3uzbpG0HI4lAd1GN2aWTjzJ56",  # PIN: 123456
             },
         ],

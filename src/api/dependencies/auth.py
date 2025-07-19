@@ -98,7 +98,7 @@ async def get_current_user_with_role(
         )
 
     # Verify role matches token
-    if user.role.value != role:
+    if user.role != role:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Role mismatch",
@@ -121,7 +121,7 @@ def require_role(allowed_roles: list[str]):
         current_user_data: tuple[UserInDb, ProfileInDb] = Depends(get_current_user_with_role)
     ) -> tuple[UserInDb, ProfileInDb]:
         user, profile = current_user_data
-        if user.role.value not in allowed_roles:
+        if user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required roles: {allowed_roles}",

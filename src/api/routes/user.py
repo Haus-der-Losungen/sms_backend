@@ -160,10 +160,14 @@ async def get_current_user_info(
 ) -> UserMeWithRole:
     """Get current user's ID, role, and profile information."""
     user, profile = current_user_data
+    # Create profile dict excluding is_deleted field
+    profile_dict = profile.dict()
+    profile_dict.pop('is_deleted', None)  # Remove is_deleted field if present
+    
     return UserMeWithRole(
         user_id=user.user_id,
         role=user.role,
-        profile=ProfilePublic(**profile.dict())
+        profile=ProfilePublic(**profile_dict)
     )
 
 
@@ -181,7 +185,7 @@ async def admin_only_endpoint(
     return {
         "message": "Admin access granted",
         "user_id": user.user_id,
-        "role": user.role.value,
+        "role": user.role,
         "user_name": f"{profile.first_name} {profile.last_name}"
     }
 
@@ -199,6 +203,6 @@ async def staff_and_admin_endpoint(
     return {
         "message": "Staff/Admin access granted",
         "user_id": user.user_id,
-        "role": user.role.value,
+        "role": user.role,
         "user_name": f"{profile.first_name} {profile.last_name}"
     }
