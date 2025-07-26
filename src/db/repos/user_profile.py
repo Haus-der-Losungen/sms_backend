@@ -47,3 +47,15 @@ class UserProfileRepository(BaseRepository):
             
             return UserProfileInDb(user=user, profile=profile), generated_pin
 
+    async def get_user_profiles_by_role(self, *, role: str, search: str = None) -> list[UserProfileInDb]:
+        """Get user profiles by role, with optional search on profile fields."""
+        users = await self.user_repo.get_users_by_role(role=role, search=search)
+        profiles = []
+        for user in users:
+            try:
+                profile = await self.profile_repo.get_profile_by_user_id(user_id=user.user_id)
+                profiles.append(UserProfileInDb(user=user, profile=profile))
+            except Exception:
+                continue
+        return profiles
+
