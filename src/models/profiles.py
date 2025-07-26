@@ -2,7 +2,7 @@
 
 from typing import Optional
 from uuid import UUID
-from pydantic import Field, EmailStr, field_validator
+from pydantic import Field, EmailStr, field_validator, ConfigDict
 
 from src.models.base import (
     CoreModel,
@@ -137,8 +137,9 @@ class ProfileUpdate(CoreModel):
 
 
 # Model for public API responses - includes IDs and timestamps
-class ProfilePublic(TimestampMixin, ProfileBase):
+class ProfilePublic(ProfileBase, UserIDModelMixin, TimestampMixin):
     """Model for public profile information in API responses"""
+    model_config = ConfigDict(extra='ignore')
     profile_id: Optional[str] = None
     user_id: Optional[str] = None
 
