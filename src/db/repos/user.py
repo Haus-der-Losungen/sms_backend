@@ -165,3 +165,17 @@ class UserRepository(BaseRepository):
         except Exception as e:
             audit_logger.error(f"Login error for user ID: {login_data.user_id} - {e}")
             raise
+
+    async def get_users_by_role(self, *, role: str, search: str = None) -> List[UserInDb]:
+        """Get users by role, with optional search on profile fields."""
+        query = '''
+        SELECT u.* FROM users u
+        JOIN profiles p ON u.user_id = p.user_id
+        WHERE u.role = :role AND u.is_deleted = FALSE AND p.is_deleted = FALSE
+        '''
+        values = {"role": role}
+        if search:
+            query += " AND (LOWER(p.first_name) LIKE :search OR LOWER(p.last_name) LIKE :search OR LOWER(p.email) LIKE :search)"
+            values["search"] = f"%{search.lower()}%"
+        users = await self.db.fetch_all(query=query, values=values)
+        return [UserInDb(**dict(user)) for user in users]
